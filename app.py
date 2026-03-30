@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import pickle
-import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
 import hashlib
 
 # -------------------------------
@@ -1345,11 +1346,14 @@ if region and region != "Select":
                 st.markdown(f"### 📊 {t.get('analysis_chart','Analysis')}")
 
                 # -------------------------------
-                # GRAPHS
+                # PLOTLY GRAPHS (FINAL VERSION)
                 # -------------------------------
+
                 col1, col2 = st.columns(2)
 
-                # AREA CHART
+                # -------------------------------
+                # AREA CHART (Yield vs Demand over stages)
+                # -------------------------------
                 with col1:
                     st.subheader(t.get("analysis_chart", "Analysis"))
 
@@ -1371,30 +1375,49 @@ if region and region != "Select":
                                 demand,
                             ],
                         }
-                    ).set_index(t.get("stage", "Stage"))
+                    )
 
-                    st.area_chart(chart_df)
+                    fig_area = px.area(
+                        chart_df,
+                        x=t.get("stage", "Stage"),
+                        y=[t.get("yield", "Yield"), t.get("demand", "Demand")],
+                        markers=True,
+                    )
 
-                # LINE GRAPH
+                    fig_area.update_layout(
+                        template="plotly_white",
+                        title=t.get("analysis_chart", "Analysis"),
+                        font=dict(size=14),
+                        margin=dict(l=10, r=10, t=40, b=10),
+                    )
+
+                    st.plotly_chart(fig_area, use_container_width=True)
+
+
+                # -------------------------------
+                # LINE COMPARISON GRAPH
+                # -------------------------------
                 with col2:
                     st.subheader(t.get("comparison_chart", "Comparison"))
 
-                    fig, ax = plt.subplots()
+                    fig_line = go.Figure()
 
-                    x = [0, 1]
-                    y = [predicted_yield, demand]
-
-                    ax.plot(x, y, marker="o")
-
-                    ax.set_xticks([0, 1])
-                    ax.set_xticklabels(
-                        [t.get("yield", "Yield"), t.get("demand", "Demand")]
+                    fig_line.add_trace(
+                        go.Scatter(
+                            x=[t.get("yield", "Yield"), t.get("demand", "Demand")],
+                            y=[predicted_yield, demand],
+                            mode="lines+markers",
+                            marker=dict(size=10),
+                            line=dict(width=3),
+                        )
                     )
 
-                    ax.set_ylabel(t.get("quintal", "Quintal"))
-                    ax.set_title(t.get("comparison_chart", "Comparison"))
+                    fig_line.update_layout(
+                        template="plotly_white",
+                        title=t.get("comparison_chart", "Comparison"),
+                        yaxis_title=t.get("quintal", "Quintal"),
+                        font=dict(size=14),
+                        margin=dict(l=10, r=10, t=40, b=10),
+                    )
 
-                    st.pyplot(fig)
-
-            else:
-                st.warning(f"⚠ {t.get('no_data','No demand data available')}")
+                    st.plotly_chart(fig_line, use_container_width=True)
